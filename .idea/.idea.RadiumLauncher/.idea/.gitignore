@@ -1,0 +1,17 @@
+bin/
+obj/
+publish/
+.idea/
+.vs/
+*.suo
+*.user
+*.resharper
+*.sln.dotsettings
+*.sln.dotsettings.user
+.nuget/
+packages/
+*.nupkg
+.DS_Store
+*~
+*.zip
+*.tar.gz

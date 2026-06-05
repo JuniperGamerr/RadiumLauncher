@@ -1,0 +1,56 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Publish and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: windows
+            rid: win-x64
+            asset_path: publish/RadiumLauncher-Windows-x64.zip
+          - target: linux
+            rid: linux-x64
+            asset_path: publish/RadiumLauncher-Linux-x64.tar.gz
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Publish App
+        run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/${{ matrix.target }}
+
+      - name: Archive Windows
+        if: matrix.target == 'windows'
+        run: |
+          cd publish/windows
+          zip -r ../../${{ matrix.asset_path }} .
+
+      - name: Archive Linux
+        if: matrix.target == 'linux'
+        run: tar -czf ${{ matrix.asset_path }} -C publish/linux .
+
+      - name: Release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

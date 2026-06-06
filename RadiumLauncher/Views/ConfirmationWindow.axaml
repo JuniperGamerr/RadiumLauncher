@@ -6,7 +6,7 @@
         WindowDecorations="BorderOnly"
         Background="#101010"
         Width="350"
-        Height="200"
+        Height="250"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
     <Panel>

@@ -43,6 +43,7 @@ public partial class ConfigurationWindow : Window
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             ProtonOption.IsVisible = true;
+            AdvancedOptions.IsVisible = false; // replace when linux gets an advanced feature
         }
     }
 

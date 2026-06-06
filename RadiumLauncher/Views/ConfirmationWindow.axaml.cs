@@ -5,14 +5,14 @@ using Avalonia.Interactivity;
 
 namespace RadiumLauncher.Views;
 
-public partial class ConfirmWindow : Window
+public partial class ConfirmationWindow : Window
 {
-    public ConfirmWindow()
+    public ConfirmationWindow()
     {
         InitializeComponent();
     }
 
-    public ConfirmWindow(string title, string message, string primaryButtonText, string secondaryButtonText)
+    public ConfirmationWindow(string title, string message, string primaryButtonText, string secondaryButtonText)
         : this()
     {
         this.GetControl<TextBlock>("WindowTitle").Text = title;

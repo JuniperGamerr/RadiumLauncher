@@ -14,19 +14,70 @@
 
     <Panel>
         <Border BorderBrush="#2D2D2D" BorderThickness="1" ZIndex="100" IsHitTestVisible="False" />
-        <Canvas IsHitTestVisible="False">
-            <Border Canvas.Left="100"
-                    Canvas.Top="-150"
-                    Width="200"
-                    Height="200"
-                    CornerRadius="100"
-                    Background="#0df904"
-                    Opacity="0.4">
+        <Panel IsHitTestVisible="False" ClipToBounds="False">
+            <Border Background="#000000"
+                    Width="450" Height="450"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Margin="-250,-350,0,0"
+                    CornerRadius="450"
+                    Opacity="0.8">
                 <Border.Effect>
-                    <BlurEffect Radius="300" />
+                    <BlurEffect Radius="150" />
                 </Border.Effect>
             </Border>
-        </Canvas>
+            <Border Background="#000000"
+                    Width="350" Height="350"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,-300,-200,0"
+                    CornerRadius="350"
+                    Opacity="0.65">
+                <Border.Effect>
+                    <BlurEffect Radius="160" />
+                </Border.Effect>
+            </Border>
+            <Border x:Name="HomeBackgroundLayer"
+                    Background="#4424d8ff"
+                    Width="500" Height="300"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,-200"
+                    CornerRadius="300"
+                    Opacity="0.45">
+                <Border.Effect>
+                    <BlurEffect Radius="170" />
+                </Border.Effect>
+                <Border.RenderTransform>
+                    <TranslateTransform />
+                </Border.RenderTransform>
+            </Border>
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="600"
+                    Height="350"
+                    Background="#0000002f"
+                    CornerRadius="0"
+                    Opacity="0.4">
+                <Border.Effect>
+                    <BlurEffect Radius="100" />
+                </Border.Effect>
+            </Border>
+            <Panel IsHitTestVisible="False" ClipToBounds="False">
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Margin="0,-250,0,0"
+                        Width="250"
+                        Height="250"
+                        CornerRadius="200"
+                        Background="#0df904"
+                        Opacity="0.6">
+                    <Border.Effect>
+                        <BlurEffect Radius="500" />
+                    </Border.Effect>
+                </Border>
+            </Panel>
+        </Panel>
 
         <Grid RowDefinitions="40, *">
             <Border Grid.Row="0"

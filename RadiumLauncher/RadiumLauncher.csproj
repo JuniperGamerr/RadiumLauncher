@@ -54,7 +54,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Views\ConfirmWindow.axaml.cs">
+      <Compile Update="Views\ConfirmationWindow.axaml.cs">
         <DependentUpon>ConfirmWindow.axaml</DependentUpon>
       </Compile>
     </ItemGroup>

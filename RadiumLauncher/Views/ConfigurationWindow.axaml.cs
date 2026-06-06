@@ -115,7 +115,7 @@ public partial class ConfigurationWindow : Window
             return;
         }
 
-        var confirm = new ConfirmWindow(
+        var confirm = new ConfirmationWindow(
             "Confirm Uninstall",
             $"This will delete the launcher-downloaded Radium installation at:\n{_downloadedRadiumFolder}\n\nThis does not remove any other Radium installation on your system.",
             "Delete",

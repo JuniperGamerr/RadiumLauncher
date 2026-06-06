@@ -583,7 +583,6 @@ public partial class MainWindow : Window
         }
         
         string appId = AppConstants.SteamAppId;
-        Console.WriteLine(appId);
         var pInfo = new ProcessStartInfo
         {
             WorkingDirectory = Path.GetDirectoryName(gameExePath),

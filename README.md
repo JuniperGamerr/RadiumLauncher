@@ -15,6 +15,7 @@ An unofficial launcher for [Radium](https://radie.app/), a Rec Room revival.
   - Radium uninstall capabilities
 - Added ETA to download details
 - Automatic launcher updates
+- Steam App Id changes
 - UI Changes
 
 ## Download
@@ -35,6 +36,7 @@ Visit the latest release page for the download: [Latest Release](https://github.
 - Integrated community feed
 - Custom launch options
 - Custom Batch file setup for external Radium installations (windows only)
+- Custom Steam App Ids
 - Linux support through Proton
 
 ## ⚠️ Warning

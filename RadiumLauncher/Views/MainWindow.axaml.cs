@@ -55,7 +55,6 @@ public partial class MainWindow : Window
         {
             _titleLogoAnimationTimer?.Stop();
         };
-        ShowHomeTab();
 
         _titleLogoAnimationTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(HomeLogoMotionTimerIntervalMs) };
         _titleLogoAnimationTimer.Tick += TitleLogoAnimationTimer_Tick;
@@ -99,6 +98,7 @@ public partial class MainWindow : Window
 
     private void TitleLogoAnimationTimer_Tick(object? sender, EventArgs e)
     {
+        if (_currentViewModel?.CurrentState == LauncherState.Running) return;
         _titleLogoAnimationTime += HomeLogoMotionTimerIntervalMs / 1000.0 * HomeLogoMotionSpeed;
         if (_titleLogoAnimationTime > HomeLogoMotionLoopDuration)
         {
@@ -115,42 +115,6 @@ public partial class MainWindow : Window
             homeMotion.X = motionX;
             homeMotion.Y = motionY;
         }
-    }
-
-    private void ShowHomeTab()
-    {
-        if (HomeTabButton is null || CreditsTabButton is null || HomeTabPanel is null || CreditsTabPanel is null)
-            return;
-
-        HomeTabPanel.IsVisible = true;
-        CreditsTabPanel.IsVisible = false;
-        HomeTabButton.Background = new SolidColorBrush(Color.Parse("#24d81e"));
-        HomeTabButton.Foreground = Brushes.Black;
-        CreditsTabButton.Background = new SolidColorBrush(Color.Parse("#2D2D2D"));
-        CreditsTabButton.Foreground = new SolidColorBrush(Color.Parse("#CCCCCC"));
-    }
-
-    private void ShowCreditsTab()
-    {
-        if (HomeTabButton is null || CreditsTabButton is null || HomeTabPanel is null || CreditsTabPanel is null)
-            return;
-
-        HomeTabPanel.IsVisible = false;
-        CreditsTabPanel.IsVisible = true;
-        HomeTabButton.Background = new SolidColorBrush(Color.Parse("#2D2D2D"));
-        HomeTabButton.Foreground = new SolidColorBrush(Color.Parse("#CCCCCC"));
-        CreditsTabButton.Background = new SolidColorBrush(Color.Parse("#24d81e"));
-        CreditsTabButton.Foreground = Brushes.Black;
-    }
-
-    private void HomeTabButton_Click(object? sender, RoutedEventArgs e)
-    {
-        ShowHomeTab();
-    }
-
-    private void CreditsTabButton_Click(object? sender, RoutedEventArgs e)
-    {
-        ShowCreditsTab();
     }
 
     private async void InactivityTimer_Tick(object? sender, EventArgs e)
@@ -309,7 +273,7 @@ public partial class MainWindow : Window
 
         if (vm.Announcements.Count == 0)
         {
-            vm.Announcements.Add("No announcements available right now.");
+            AnnouncementsPanel.IsVisible = false;
         }
     }
 

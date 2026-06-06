@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -38,6 +39,11 @@ public partial class ConfigurationWindow : Window
         Launchoptstb.Text = currentLaunchOptions;
 
         LoadBatchFileSettings();
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            ProtonOption.IsVisible = true;
+        }
     }
 
     private void LoadBatchFileSettings()

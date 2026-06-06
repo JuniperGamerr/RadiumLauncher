@@ -42,11 +42,6 @@
             </Setter>
         </Style>
         <Style Selector="Button.MainAction:pointerover">
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <ScaleTransform ScaleX="1.02" ScaleY="1.02" />
-                </Setter.Value>
-            </Setter>
             <Setter Property="Background" Value="#000000" />
         </Style>
 
@@ -345,31 +340,6 @@
             <ScrollViewer Grid.Row="1" x:Name="ContentScrollViewer" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="20" Spacing="30">
-                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                        <Button x:Name="HomeTabButton"
-                                Content="Home"
-                                Width="120"
-                                Height="40"
-                                Background="#24d81e"
-                                Foreground="Black"
-                                FontWeight="SemiBold"
-                                CornerRadius="12"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Click="HomeTabButton_Click" />
-                        <Button x:Name="CreditsTabButton"
-                                Content="Credits"
-                                Width="120"
-                                Height="40"
-                                Background="#000000"
-                                Foreground="#CCCCCC"
-                                FontWeight="SemiBold"
-                                CornerRadius="12"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Click="CreditsTabButton_Click" />
-                    </StackPanel>
-
                     <StackPanel x:Name="HomeTabPanel" Spacing="30">
                         <StackPanel Spacing="20">
                         <Grid Width="300" HorizontalAlignment="Center" x:Name="HomeLogoGrid" RenderTransformOrigin="0.5,0.5">
@@ -382,7 +352,6 @@
 
                         <StackPanel Spacing="12">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-
                                 <Panel Width="270">
                                     <StackPanel Orientation="Horizontal"
                                                 IsVisible="{Binding CurrentState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static vm:LauncherState.Ready}}">
@@ -505,8 +474,9 @@
                                 </Panel>
 
                                 <Button Classes="Config" Click="ConfigButton_Click">
+                                    <!-- couldn't find old svg source so heres the new one https://www.svgrepo.com/svg/501352/settings -->
                                     <Path Fill="White"
-                                          Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.65 15.48,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.52,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,12.33 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.35 8.52,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.48,18.67 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
+                                          Data="M1703.534 960c0-41.788-3.84-84.48-11.633-127.172l210.184-182.174-199.454-340.856-265.186 88.433c-66.974-55.567-143.323-99.389-223.85-128.415L1158.932 0h-397.78L706.49 269.704c-81.43 29.138-156.423 72.282-223.962 128.414l-265.073-88.32L18 650.654l210.184 182.174C220.39 875.52 216.55 918.212 216.55 960s3.84 84.48 11.633 127.172L18 1269.346l199.454 340.856 265.186-88.433c66.974 55.567 143.322 99.389 223.85 128.415L761.152 1920h397.779l54.663-269.704c81.318-29.138 156.424-72.282 223.963-128.414l265.073 88.433 199.454-340.856-210.184-182.174c7.793-42.805 11.633-85.497 11.633-127.285m-743.492 395.294c-217.976 0-395.294-177.318-395.294-395.294 0-217.976 177.318-395.294 395.294-395.294 217.977 0 395.294 177.318 395.294 395.294 0 217.976-177.317 395.294-395.294 395.294"
                                           Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Center"
                                           VerticalAlignment="Center" />
                                 </Button>
@@ -530,18 +500,17 @@
                                            VerticalAlignment="Center" />
                             </StackPanel>
 
-                            <StackPanel Spacing="12">
+                            <StackPanel x:Name="AnnouncementsPanel" Spacing="12">
                                 <TextBlock Text="Announcements" Foreground="White" FontSize="16" FontWeight="SemiBold"
                                            Margin="10,0,0,0" />
-                                <Border Background="#000000" CornerRadius="15" Padding="12">
+                                <Border Background="#50000000" CornerRadius="10" Padding="12">
                                     <ItemsControl ItemsSource="{Binding Announcements}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding}"
                                                            Foreground="#DDDDDD"
                                                            FontSize="13"
-                                                           TextWrapping="Wrap"
-                                                           Margin="0,0,0,8" />
+                                                           TextWrapping="Wrap"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -567,7 +536,7 @@
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MaximizePhotoCommand, FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}">
                                         <Border Name="ImageRoot" CornerRadius="12" ClipToBounds="True"
-                                                Background="#000000" Height="140">
+                                                Background="#000000" Width="243" Height="140">
                                             <Panel>
                                                 <Image
                                                     Source="{Binding Bitmap, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
@@ -635,25 +604,6 @@
                         </ItemsControl>
                     </StackPanel>
                 </StackPanel>
-            <StackPanel x:Name="CreditsTabPanel" Spacing="20" IsVisible="False">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Credits" Foreground="White" FontSize="28" FontWeight="Bold" />
-                    <TextBlock Text="A fanmade Radium launcher made by typxzero."
-                               Foreground="#AAAAAA" FontSize="15" TextWrapping="Wrap" MaxWidth="900" />
-                </StackPanel>
-
-                <Border Background="#000000" CornerRadius="18" Padding="20">
-                    <StackPanel Spacing="18">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Development" Foreground="White" FontSize="20" FontWeight="Bold" />
-                            <TextBlock Text="typxzero — Core launcher logic, update system, and game integration."
-                                       Foreground="#CCCCCC" FontSize="14" TextWrapping="Wrap" />
-                            <TextBlock Text="Hollotone — Menu Music (Production), v1.1.0 feature additions and general debugging"
-                                       Foreground="#CCCCCC" FontSize="14" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
         </StackPanel>
     </ScrollViewer>
         </Grid>

@@ -602,9 +602,9 @@ public partial class MainWindow : Window
             string protonPathFile = Path.Combine(_configFolder, "protonpath.txt");
             string protonPath = File.Exists(protonPathFile) ? (await File.ReadAllTextAsync(protonPathFile)).Trim() : "";
 
-            if (!string.IsNullOrEmpty(protonPath))
+            if (string.IsNullOrEmpty(protonPath))
             {
-                _ = new MessageBoxWindow("Missing Configuration", "Please set the Proton folder in the configuration window to continue.", null);
+                _ = new MessageBoxWindow("Missing Configuration", "Please set the Proton folder in the configuration window to continue.", null).ShowDialog(this);
                 return;
             }
             
@@ -638,9 +638,9 @@ public partial class MainWindow : Window
             string winePathFile = Path.Combine(_configFolder, "winepath.txt");
             string winePath = File.Exists(winePathFile) ? (await File.ReadAllTextAsync(winePathFile)).Trim() : "";
 
-            if (!string.IsNullOrEmpty(winePath))
+            if (string.IsNullOrEmpty(winePath))
             {
-                _ = new MessageBoxWindow("Missing Configuration", "Please set the Wine executable path in the configuration window to continue.", null);
+                _ = new MessageBoxWindow("Missing Configuration", "Please set the Wine executable path in the configuration window to continue.", null).ShowDialog(this);
                 return;
             }
             

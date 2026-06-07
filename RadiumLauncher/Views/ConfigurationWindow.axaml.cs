@@ -28,11 +28,17 @@ public partial class ConfigurationWindow : Window
 
         string protonPathFile = Path.Combine(_configFolder, "protonpath.txt");
         string launchOptionsFile = Path.Combine(_configFolder, "launchoptions.txt");
+        string steamAppIdFile = Path.Combine(AppConstants.GameFolder, "steam_appid.txt");
 
         string currentProtonPath = File.Exists(protonPathFile) ? File.ReadAllText(protonPathFile) : string.Empty;
         string currentLaunchOptions =
             File.Exists(launchOptionsFile) ? File.ReadAllText(launchOptionsFile) : "%command%";
 
+        if (!File.Exists(steamAppIdFile))
+        {
+            File.WriteAllText(steamAppIdFile, "471710");
+        }
+        
         Protonpathtb.Text = currentProtonPath;
         Launchoptstb.Text = currentLaunchOptions;
         Steamappidtb.Text = File.ReadAllText(Path.Combine(AppConstants.GameFolder, "steam_appid.txt")).Trim();

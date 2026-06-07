@@ -471,17 +471,16 @@ public partial class MainWindow : Window
             vm.EtaText = string.Empty;
             vm.ProgressDetails = string.Empty;
 
-            string clientFolder = Path.Combine(vm.GameFolder, "client");
-            if (Directory.Exists(clientFolder))
+            if (Directory.Exists(vm.GameFolder))
             {
-                Directory.Delete(clientFolder, true);
+                Directory.Delete(vm.GameFolder, true);
             }
 
-            Directory.CreateDirectory(clientFolder);
+            Directory.CreateDirectory(vm.GameFolder);
 
             await File.WriteAllTextAsync(Path.Combine(vm.GameFolder, "hash.txt"), hashedStr);
 
-            await Task.Run(() => ExtractArchive(zipPath, clientFolder));
+            await Task.Run(() => ExtractArchive(zipPath, vm.GameFolder));
 
             File.Delete(zipPath);
 
@@ -569,7 +568,7 @@ public partial class MainWindow : Window
         if (info.Length < 4) return;
 
         string? batchPath = GetCustomBatchFilePath(vm);
-        if (!string.IsNullOrEmpty(batchPath) && File.Exists(batchPath))
+        if (!string.IsNullOrEmpty(batchPath) && File.Exists(batchPath) && vm.OperatingSystemName == "Windows")
         {
             await StartProcess(batchPath, vm, isBatch: true);
             return;
@@ -707,18 +706,12 @@ public partial class MainWindow : Window
     private string? GetGameExecutablePath(MainWindowViewModel vm, string[] info)
     {
         string expectedExeName = info[3].Trim();
-        string candidate = Path.Combine(vm.GameFolder, info[2].Trim(), expectedExeName);
+        string candidate = Path.Combine(vm.GameFolder, expectedExeName);
         if (File.Exists(candidate))
         {
             return candidate;
         }
-
-        candidate = Path.Combine(vm.GameFolder, expectedExeName);
-        if (File.Exists(candidate))
-        {
-            return candidate;
-        }
-
+        
         try
         {
             var found = Directory.EnumerateFiles(vm.GameFolder, expectedExeName, SearchOption.AllDirectories).FirstOrDefault();
@@ -796,7 +789,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error loading OS logo from {osAssetPath}: {ex.Message}");
+            Debug.WriteLine($"Error loading OS logo from {osAssetPath}: {ex}");
         }
     }
 

@@ -4,7 +4,7 @@
 
 An unofficial launcher for [Radium](https://radie.app/), a Rec Room revival.
 
-![Preview](Assets/v1.1.0-preview.png)
+![Preview](Assets/v1.2.0-preview.png)
 
 </div>
 

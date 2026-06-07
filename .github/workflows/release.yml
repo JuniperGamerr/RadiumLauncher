@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Publish and Release
+    name: Publish and Archive
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -27,39 +27,40 @@ jobs:
             asset_path: publish/RadiumLauncher-macOS-arm64.zip
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore Dependencies
-        run: dotnet restore
+      - run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o publish/${{ matrix.target }}
 
-      - name: Publish App
-        run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o publish/${{ matrix.target }}
-
-      - name: Archive Windows
-        if: matrix.target == 'windows'
+      - name: Archive
         run: |
-          cd publish/windows
-          zip -r ../../${{ matrix.asset_path }} .
+          if [ "${{ matrix.target }}" == "windows" ]; then (cd publish/windows && zip -r ../../${{ matrix.asset_path }} .);
+          elif [ "${{ matrix.target }}" == "linux" ]; then tar -czf ${{ matrix.asset_path }} -C publish/linux .;
+          elif [ "${{ matrix.target }}" == "macos" ]; then (cd publish/macos && zip -r ../../${{ matrix.asset_path }} .); fi
 
-      - name: Archive Linux
-        if: matrix.target == 'linux'
-        run: tar -czf ${{ matrix.asset_path }} -C publish/linux .
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-${{ matrix.target }}
+          path: ${{ matrix.asset_path }}
 
-      - name: Archive macOS
-        if: matrix.target == 'macos'
-        run: |
-          cd publish/macos
-          zip -r ../../${{ matrix.asset_path }} .
+  release:
+    name: Release GitHub
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: assets-*
+          merge-multiple: true
 
-      - name: Release GitHub
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.asset_path }}
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

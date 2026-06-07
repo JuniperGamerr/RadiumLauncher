@@ -86,7 +86,15 @@ public class DiscordRpcService
             {
                 return "offline dorm room";
             }
-            return node.InnerText.Trim();
+            else if (node.InnerText.Trim() == "[OFFLINE]")
+            {
+                return "menu";
+            }
+            else if (node.InnerText.Trim() == "[PRIVATE]")
+            {
+                return "a private room";
+            }
+            else return node.InnerText.Trim();
         }
 
         return "an Unknown Room";

@@ -776,11 +776,12 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (vm.GameProcess == null) return;
+            var gameProcess = vm.GameProcess;
+            if (gameProcess == null) return;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                vm.GameProcess.Kill(true);
+                gameProcess.Kill(true);
             }
             else
             {
@@ -795,9 +796,9 @@ public partial class MainWindow : Window
 
                 await Task.Delay(2000);
 
-                if (!vm.GameProcess.HasExited)
+                if (!gameProcess.HasExited)
                 {
-                    vm.GameProcess.Kill(true);
+                    gameProcess.Kill(true);
                 }
             }
         }

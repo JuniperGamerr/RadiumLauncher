@@ -8,15 +8,11 @@ An unofficial launcher for [Radium](https://radie.app/), a Rec Room revival.
 
 </div>
 
-## v1.1.0 Update for RadiumLauncher is here ([JuniperGamerr](https://github.com/JuniperGamerr))
-- Announcements area
-- New settings options
-  - Advanced tab containing custom Batch File paths (for users who don't want to reinstall radium)
-  - Radium uninstall capabilities
-- Added ETA to download details
-- Automatic launcher updates
-- Steam App Id changes
-- UI Changes
+## v1.2.0 Update for RadiumLauncher is here
+- Discord Rich Presence
+- Multi-threaded downloading
+- macOS support using wine
+- Check API before launch
 
 ## Download
 
@@ -28,7 +24,7 @@ Visit the latest release page for the download: [Latest Release](https://github.
 | :--- | :--- |
 | Windows 10/11 | ✅ Compatible |
 | Linux | ✅ Compatible |
-| macOS | ❌ Incompatible |
+| macOS | ⚠️ Not tested |
 
 ## Features
 - Automatic updates
@@ -38,6 +34,9 @@ Visit the latest release page for the download: [Latest Release](https://github.
 - Custom Batch file setup for external Radium installations (windows only)
 - Custom Steam App Ids
 - Linux support through Proton
+- Multi-threaded downloading
+- macOS support using wine
+- Discord Rich Presence
 
 ## ⚠️ Warning
 

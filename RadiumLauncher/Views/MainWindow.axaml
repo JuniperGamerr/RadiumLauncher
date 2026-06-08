@@ -356,7 +356,7 @@
                             <Grid.RenderTransform>
                                 <TranslateTransform />
                             </Grid.RenderTransform>
-                            <Image Source="{Binding MainLogo, FallbackValue={x:Null}, TargetNullValue={x:Null}}"
+                            <Image Source="/Assets/radium-logo.png"
                                    Width="300" HorizontalAlignment="Center" />
                         </Grid>
 
@@ -406,6 +406,7 @@
                                                    VerticalAlignment="Center" LetterSpacing="2" />
                                     </Button>
 
+        
                                     <Button Classes="MainAction Download" Width="270"
                                             IsVisible="{Binding CurrentState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static vm:LauncherState.NeedsUpdate}}"
                                             Click="MainButton_Click"

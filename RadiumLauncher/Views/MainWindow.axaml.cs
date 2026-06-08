@@ -72,6 +72,7 @@ public partial class MainWindow : Window
         PointerMoved += MainWindow_PointerMoved;
         PointerPressed += (_, _) => ResetInactivity();
         KeyDown += (_, _) => ResetInactivity();
+
     }
 
     private void MainWindow_PointerMoved(object? sender, PointerEventArgs e)
@@ -99,11 +100,29 @@ public partial class MainWindow : Window
     private async void VanillaToggleButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         await ToggleVanillaThemeAsync();
+
+        //disable install button because pc version doesn't exist yet
+        
+        if (_isVanillaMode == true)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                vm.CurrentState = LauncherState.Unavailable;
+            }
+
+        }
+        else
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                await UpdateLauncherState(vm);
+            }
+        }
     }
 
     private async Task ToggleVanillaThemeAsync()
     {
-        var rootPanel = this.FindControl<Panel>("RootPanel");
+        var rootPanel = this.FindControl<Panel>("RootPanel"); // don't ask
         if (rootPanel == null)
             return;
 
@@ -117,16 +136,18 @@ public partial class MainWindow : Window
     {
         var titleIcon = this.FindControl<Avalonia.Controls.Image>("TitleIcon");
         var titleLogo = this.FindControl<Avalonia.Controls.Image>("TitleLogo");
+        var mainLogo = this.FindControl<Avalonia.Controls.Image>("MainLogo");
         var homeLayer = this.FindControl<Border>("HomeBackgroundLayer");
         var accentGlow = this.FindControl<Border>("AccentGlow");
         var vanillaButton = this.FindControl<Button>("VanillaToggleButton");
 
         var vanillaIconUri = new Uri("avares://RadiumLauncher/Assets/vanilla-icon.png");
         var vanillaLogoUri = new Uri("avares://RadiumLauncher/Assets/vanilla-logo.png");
+        var vanillaLogoUri2 = new Uri("avares://RadiumLauncher/Assets/vanilla-logo-2.png");
         var radiumIconUri = new Uri("avares://RadiumLauncher/Assets/radium-icon.png");
         var radiumLogoUri = new Uri("avares://RadiumLauncher/Assets/radium-logo.png");
 
-        if (_isVanillaMode)
+        if (_isVanillaMode) // Vanilla Theme Stuff if it wasn't obvious already
         {
             if (titleIcon != null)
             {
@@ -136,6 +157,10 @@ public partial class MainWindow : Window
             if (titleLogo != null)
             {
                 titleLogo.Source = new Bitmap(AssetLoader.Open(vanillaLogoUri));
+            }
+            if (mainLogo != null)
+            {
+                mainLogo.Source = new Bitmap(AssetLoader.Open(vanillaLogoUri2)); // this doesn't change the main logo 
             }
 
             if (homeLayer != null)
@@ -148,7 +173,7 @@ public partial class MainWindow : Window
             if (vanillaButton != null)
                 vanillaButton.Content = "radium";
         }
-        else
+        else // Radium Theme Stuff vvvv
         {
             if (titleIcon != null)
                 titleIcon.Source = new Bitmap(AssetLoader.Open(radiumIconUri));
@@ -347,7 +372,8 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task CheckForExistingInstall(MainWindowViewModel vm)
+    private async Task CheckForExistingInstall(MainWindowViewModel vm) // Doesn't work and superseded by the Batch file system but keeping it here just in case I want to add 
+                                                                    // a "Repair" option or i'm able to auto find existing installs better in the future1
     {
         var defaultFolder = Path.Combine(AppConstants.AppDataDirectory, "Radium_PC");
         vm.GameFolder = defaultFolder;
@@ -393,7 +419,7 @@ public partial class MainWindow : Window
         await UpdateLauncherState(vm);
     }
 
-    private async Task UpdateLauncherState(MainWindowViewModel vm)
+    private async Task UpdateLauncherState(MainWindowViewModel vm) 
     {
         if (string.IsNullOrEmpty(vm.InfoResponse))
         {
@@ -639,7 +665,7 @@ public partial class MainWindow : Window
         p?.WaitForExit();
     }
 
-    private async Task LaunchRadium(MainWindowViewModel vm)
+    private async Task LaunchRadium(MainWindowViewModel vm) // build Vanilla launching support from this
     {
         if (string.IsNullOrEmpty(vm.InfoResponse)) return;
         string[] info = vm.InfoResponse.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
@@ -1051,6 +1077,7 @@ public partial class MainWindow : Window
             {
                 await StopRadium(vm);
             }
+
         }
         catch (Exception ex)
         {

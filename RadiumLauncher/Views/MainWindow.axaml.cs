@@ -39,12 +39,12 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer? _inactivityTimer;
     private readonly DispatcherTimer? _titleLogoAnimationTimer;
     private bool _isInitialized;
-    private bool _isMusicMuted;
     private double _titleLogoAnimationTime;
     private MainWindowViewModel? _currentViewModel;
     private readonly string _configFolder = Path.Combine(AppConstants.AppDataDirectory, "Configuration");
     private string? _patchOnline;
     private string? _patchLocal;
+    private bool _isVanillaMode;
 
     public MainWindow()
     {
@@ -94,6 +94,101 @@ public partial class MainWindow : Window
     {
         _inactivityTimer?.Stop();
         _inactivityTimer?.Start();
+    }
+
+    private async void VanillaToggleButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        await ToggleVanillaThemeAsync();
+    }
+
+    private async Task ToggleVanillaThemeAsync()
+    {
+        var rootPanel = this.FindControl<Panel>("RootPanel");
+        if (rootPanel == null)
+            return;
+
+        await AnimateOpacityAsync(rootPanel, rootPanel.Opacity, 0.0, TimeSpan.FromMilliseconds(180));
+        _isVanillaMode = !_isVanillaMode;
+        ApplyTheme();
+        await AnimateOpacityAsync(rootPanel, 0.0, 1.0, TimeSpan.FromMilliseconds(220));
+    }
+
+    private void ApplyTheme()
+    {
+        var titleIcon = this.FindControl<Avalonia.Controls.Image>("TitleIcon");
+        var titleLogo = this.FindControl<Avalonia.Controls.Image>("TitleLogo");
+        var homeLayer = this.FindControl<Border>("HomeBackgroundLayer");
+        var accentGlow = this.FindControl<Border>("AccentGlow");
+        var vanillaButton = this.FindControl<Button>("VanillaToggleButton");
+
+        var vanillaIconUri = new Uri("avares://RadiumLauncher/Assets/vanilla-icon.png");
+        var vanillaLogoUri = new Uri("avares://RadiumLauncher/Assets/vanilla-logo.png");
+        var radiumIconUri = new Uri("avares://RadiumLauncher/Assets/radium-icon.png");
+        var radiumLogoUri = new Uri("avares://RadiumLauncher/Assets/radium-logo.png");
+
+        if (_isVanillaMode)
+        {
+            if (titleIcon != null)
+            {
+                titleIcon.Source = new Bitmap(AssetLoader.Open(vanillaIconUri));
+            }
+
+            if (titleLogo != null)
+            {
+                titleLogo.Source = new Bitmap(AssetLoader.Open(vanillaLogoUri));
+            }
+
+            if (homeLayer != null)
+                homeLayer.Background = new SolidColorBrush(Color.Parse("#8D6D4F"));
+
+            if (accentGlow != null)
+                accentGlow.Background = new SolidColorBrush(Color.Parse("#A9825C"));
+
+            Background = new SolidColorBrush(Color.Parse("#3A2A1F"));
+            if (vanillaButton != null)
+                vanillaButton.Content = "radium";
+        }
+        else
+        {
+            if (titleIcon != null)
+                titleIcon.Source = new Bitmap(AssetLoader.Open(radiumIconUri));
+
+            if (titleLogo != null)
+                titleLogo.Source = new Bitmap(AssetLoader.Open(radiumLogoUri));
+
+            if (homeLayer != null)
+                homeLayer.Background = new SolidColorBrush(Color.Parse("#4424d8ff"));
+
+            if (accentGlow != null)
+                accentGlow.Background = new SolidColorBrush(Color.Parse("#0df904"));
+
+            Background = new SolidColorBrush(Colors.Black);
+            if (vanillaButton != null)
+                vanillaButton.Content = "vanilla";
+        }
+
+        try
+        {
+            var iconFilename = _isVanillaMode ? "vanilla-icon.png" : "radium-icon.png";
+            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", iconFilename);
+            using var stream = File.OpenRead(iconPath);
+            Icon = new WindowIcon(stream);
+        }
+        catch
+        {
+            // ignore icon assignment failures
+        }
+    }
+
+    private static async Task AnimateOpacityAsync(Control target, double from, double to, TimeSpan duration)
+    {
+        const int steps = 12;
+        for (int i = 0; i <= steps; i++)
+        {
+            var progress = i / (double)steps;
+            target.Opacity = from + (to - from) * progress;
+            await Task.Delay(duration / steps);
+        }
     }
 
     private void TitleLogoAnimationTimer_Tick(object? sender, EventArgs e)

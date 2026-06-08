@@ -201,7 +201,7 @@
         </Style>
     </Window.Styles>
 
-    <Panel>
+    <Panel x:Name="RootPanel">
         <Grid ZIndex="200" IsHitTestVisible="True">
             <Border VerticalAlignment="Top" Height="4" Cursor="SizeNorthSouth"
                     Background="Transparent" PointerPressed="ResizeTop_PointerPressed" />
@@ -276,7 +276,8 @@
                 </Border.Effect>
             </Border>
             <Panel IsHitTestVisible="False" ClipToBounds="False">
-                <Border HorizontalAlignment="Center"
+                <Border x:Name="AccentGlow"
+                        HorizontalAlignment="Center"
                         VerticalAlignment="Top"
                         Margin="0,-250,0,0"
                         Width="400"
@@ -302,8 +303,16 @@
                 PointerPressed="TitleBar_PointerPressed">
                 <Grid ColumnDefinitions="*, Auto">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <Image Width="24" Height="24" Source="/Assets/radium-icon.png" />
-                        <Image Width="128" Height="24" Source="/Assets/radium-logo.png" Stretch="Uniform" />
+                        <Button x:Name="VanillaToggleButton"
+                                Content="vanilla"
+                                Background="#1F1B16"
+                                Foreground="White"
+                                Padding="8,4"
+                                FontSize="12"
+                                CornerRadius="10"
+                                Click="VanillaToggleButton_Click" />
+                        <Image x:Name="TitleIcon" Width="24" Height="24" Source="/Assets/radium-icon.png" />
+                        <Image x:Name="TitleLogo" Width="128" Height="24" Source="/Assets/radium-logo.png" Stretch="Uniform" />
                         <TextBlock Text="Launcher"
                                    Foreground="White"
                                    FontSize="12"
@@ -313,7 +322,8 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="Update"
+                        <Button x:Name="UpdateButton"
+                            Content="Update"
                             Background="Transparent"
                             Foreground="#888888"
                             Padding="8,4"
@@ -352,7 +362,7 @@
 
                         <StackPanel Spacing="12">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                                <Panel Width="270">
+                                <Panel Width="270" x:Name="LauncherControlsPanel">
                                     <StackPanel Orientation="Horizontal"
                                                 IsVisible="{Binding CurrentState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static vm:LauncherState.Ready}}">
                                         <Button Classes="MainAction Ready" Width="165" Click="MainButton_Click">

@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -18,8 +19,9 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using RadiumLauncher.Models;
-using RadiumLauncher.Services;
 using RadiumLauncher.ViewModels;
+using Downloader;
+using RadiumLauncher.Services;
 
 namespace RadiumLauncher.Views;
 
@@ -392,9 +394,9 @@ public partial class MainWindow : Window
             vm.Announcements.Add(line);
         }
 
-        if (vm.Announcements.Count == 0)
+        if (vm.Announcements.Count != 0)
         {
-            AnnouncementsPanel.IsVisible = false;
+            AnnouncementsPanel.IsVisible = true;
         }
     }
 
@@ -406,9 +408,7 @@ public partial class MainWindow : Window
         }
 
         if (span.TotalMinutes >= 1)
-        {
             return $"{(int)span.TotalMinutes}m {span.Seconds}s";
-        }
 
         return $"{span.Seconds}s";
     }
@@ -417,6 +417,26 @@ public partial class MainWindow : Window
     {
         await FetchLatestInfo(vm);
         await UpdateLauncherState(vm);
+        string[] info = vm.InfoResponse.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+        string? gameExePath = GetGameExecutablePath(vm, info);
+        if (string.IsNullOrEmpty(gameExePath))
+        {
+            AppConstants.SteamAppId = "471710";
+        }
+        else
+        {
+            AppConstants.GameFolder = Path.Combine(gameExePath, "..");
+            string appIdPath = Path.Combine(AppConstants.GameFolder, "steam_appid.txt");
+            if (File.Exists(appIdPath))
+            {
+                AppConstants.SteamAppId = (await File.ReadAllTextAsync(appIdPath)).Trim();
+            }
+            else
+            {
+                AppConstants.SteamAppId = "471710";
+                await File.WriteAllTextAsync(appIdPath, AppConstants.SteamAppId);
+            }
+        }
     }
 
     private async Task UpdateLauncherState(MainWindowViewModel vm) 
@@ -489,13 +509,13 @@ public partial class MainWindow : Window
         {
             vm.InfoResponse = string.Empty;
             _ = new MessageBoxWindow("Network Error",
-                $"Could not fetch latest info. Please check your internet connection. Details: {ex.Message}", null);
+                $"Could not fetch latest info. Please check your internet connection. Details: {ex.Message}", null).ShowDialog(this);
         }
         catch (Exception ex)
         {
             vm.InfoResponse = string.Empty;
             _ = new MessageBoxWindow("Error",
-                $"An unexpected error occurred while fetching latest info. Details: {ex.Message}", null);
+                $"An unexpected error occurred while fetching latest info. Details: {ex.Message}", null).ShowDialog(this);
         }
     }
 
@@ -512,50 +532,51 @@ public partial class MainWindow : Window
             vm.DownloadProgress = 0;
 
             var zipPath = Path.Combine(AppConstants.AppDataDirectory, info[4]);
-            using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
+            
+            string settingsPath = Path.Combine(_configFolder, SettingsFileName);
+            LauncherSettings? settings = null;
+            if (File.Exists(settingsPath))
             {
-                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                await using (var content = await response.Content.ReadAsStreamAsync())
-                await using (var file = new FileStream(zipPath, FileMode.Create))
-                {
-                    var buffer = new byte[8192];
-                    var totalRead = 0L;
-                    int read;
-                    DateTime startTime = DateTime.Now;
-
-                            while ((read = await content.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-                        await file.WriteAsync(buffer, 0, read);
-                        totalRead += read;
-
-                        double elapsed = (DateTime.Now - startTime).TotalSeconds;
-                        double speed = elapsed > 0 ? (totalRead / 1024.0 / 1024.0) / elapsed : 0;
-
-                        if (totalBytes != -1)
-                        {
-                            vm.DownloadProgress = (double)totalRead / totalBytes * 100;
-                            vm.ProgressDetails =
-                                $"{totalRead / 1024.0 / 1024.0:F1}MB / {totalBytes / 1024.0 / 1024.0:F1}MB | {speed:F1} MB/s";
-
-                            long remainingBytes = totalBytes - totalRead;
-                            if (remainingBytes > 0 && speed > 0)
-                            {
-                                var eta = TimeSpan.FromSeconds(remainingBytes / 1024.0 / 1024.0 / speed);
-                                vm.EtaText = $"ETA: {FormatTimeSpan(eta)}";
-                            }
-                            else
-                            {
-                                vm.EtaText = "ETA: calculating...";
-                            }
-                        }
-                        else
-                        {
-                            vm.ProgressDetails = $"Downloaded {totalRead / 1024.0 / 1024.0:F1}MB";
-                            vm.EtaText = "ETA: calculating...";
-                        }
-                    }
-                }
+                var json = await File.ReadAllTextAsync(settingsPath);
+                settings = JsonSerializer.Deserialize<LauncherSettings>(json);
             }
+
+            var downloadConfiguration = new DownloadConfiguration()
+            {
+                BufferBlockSize = 10240,
+                ChunkCount = (int)settings.DlThreadCount,
+                MaximumMemoryBufferBytes = 1024 * 1024 * 10,
+                BlockTimeout = 10000
+            };
+
+            var downloader = new DownloadService(downloadConfiguration);
+            downloader.DownloadProgressChanged += (_, args) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    vm.DownloadProgress = args.ProgressPercentage;
+                    vm.ProgressDetails =
+                        $"{args.ReceivedBytesSize / 1024.0 / 1024.0:F1}MB / {args.TotalBytesToReceive / 1024.0 / 1024.0:F1}MB | {args.BytesPerSecondSpeed / 1024.0 / 1024.0:F1} MB/s";
+                    
+                    double etaSeconds = 0;
+                    if (args.BytesPerSecondSpeed > 0)
+                    {
+                        etaSeconds = (args.TotalBytesToReceive - args.ReceivedBytesSize) / args.BytesPerSecondSpeed;
+                    }
+
+                    if (double.IsFinite(etaSeconds) && etaSeconds >= 0 && etaSeconds <= TimeSpan.MaxValue.TotalSeconds)
+                    {
+                        var eta = TimeSpan.FromSeconds(etaSeconds);
+                        vm.EtaText = $"ETA: {FormatTimeSpan(eta)}";
+                    }
+                    else
+                    {
+                        vm.EtaText = "ETA: calculating...";
+                    }
+                });
+            };
+
+            await downloader.DownloadFileTaskAsync(downloadUrl, zipPath);
 
             vm.CurrentState = LauncherState.Verifying;
             var hashed = await SHA256.HashDataAsync(File.OpenRead(zipPath));
@@ -565,7 +586,7 @@ public partial class MainWindow : Window
                 !hashedStr.Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
             {
                 _ = new MessageBoxWindow("Hash Mismatch",
-                    "File hashes do not match. Current installation may be corrupt.", null);
+                    "File hashes do not match. Current installation may be corrupt.", null).ShowDialog(this);
                 vm.CurrentState = LauncherState.NeedsDownload;
                 return;
             }
@@ -574,27 +595,24 @@ public partial class MainWindow : Window
             vm.EtaText = string.Empty;
             vm.ProgressDetails = string.Empty;
 
-            string clientFolder = Path.Combine(vm.GameFolder, "client");
-            if (Directory.Exists(clientFolder))
+            if (Directory.Exists(vm.GameFolder))
             {
-                Directory.Delete(clientFolder, true);
+                Directory.Delete(vm.GameFolder, true);
             }
 
-            Directory.CreateDirectory(clientFolder);
+            Directory.CreateDirectory(vm.GameFolder);
 
             await File.WriteAllTextAsync(Path.Combine(vm.GameFolder, "hash.txt"), hashedStr);
-
-            await Task.Run(() => ExtractArchive(zipPath, clientFolder));
+            await Task.Run(() => ExtractArchive(zipPath, vm.GameFolder));
 
             File.Delete(zipPath);
 
             await PatchRadium(vm);
-
             await UpdateLauncherState(vm);
         }
         catch (Exception ex)
         {
-            _ = new MessageBoxWindow("Installation Failed", ex.Message, null);
+            _ = new MessageBoxWindow("Installation Failed", ex.Message, null).ShowDialog(this);
             vm.CurrentState = LauncherState.NeedsDownload;
         }
     }
@@ -647,7 +665,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            _ = new MessageBoxWindow("Patching Failed", ex.Message, null);
+            _ = new MessageBoxWindow("Patching Failed", ex.Message, null).ShowDialog(this);
         }
     }
 
@@ -672,7 +690,7 @@ public partial class MainWindow : Window
         if (info.Length < 4) return;
 
         string? batchPath = GetCustomBatchFilePath(vm);
-        if (!string.IsNullOrEmpty(batchPath) && File.Exists(batchPath))
+        if (!string.IsNullOrEmpty(batchPath) && File.Exists(batchPath) && vm.OperatingSystemName == "Windows")
         {
             await StartProcess(batchPath, vm, isBatch: true);
             return;
@@ -681,13 +699,11 @@ public partial class MainWindow : Window
         string? gameExePath = GetGameExecutablePath(vm, info);
         if (string.IsNullOrEmpty(gameExePath) || !File.Exists(gameExePath))
         {
-            _ = new MessageBoxWindow("Missing Executable", "Could not find the Radium executable.", null);
+            _ = new MessageBoxWindow("Missing Executable", "Could not find the Radium executable.", null).ShowDialog(this);
             return;
         }
-
-        string gameDirectory = Path.GetDirectoryName(gameExePath) ?? vm.GameFolder;
-
-        string appId = await File.ReadAllTextAsync(Path.Combine(gameDirectory, "steam_appid.txt"));
+        
+        string appId = AppConstants.SteamAppId;
         var pInfo = new ProcessStartInfo
         {
             WorkingDirectory = Path.GetDirectoryName(gameExePath),
@@ -708,22 +724,63 @@ public partial class MainWindow : Window
             string protonPathFile = Path.Combine(_configFolder, "protonpath.txt");
             string protonPath = File.Exists(protonPathFile) ? (await File.ReadAllTextAsync(protonPathFile)).Trim() : "";
 
-            string finalSteamPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".steam/steam");
+            if (string.IsNullOrEmpty(protonPath))
+            {
+                _ = new MessageBoxWindow("Missing Configuration", "Please set the Proton folder in the configuration window to continue.", null).ShowDialog(this);
+                return;
+            }
+            
+            string finalSteamPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".steam/steam");
             if (!Directory.Exists(finalSteamPath))
             {
-                finalSteamPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".local/share/Steam");
+                finalSteamPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/Steam");
+                if (!Directory.Exists(finalSteamPath))
+                {
+                    finalSteamPath = Path.Combine(protonPath, "..", "..", "..");
+                    if (!Directory.Exists(finalSteamPath))
+                    {
+                        _ = new MessageBoxWindow("Steam Missing", "Could not find the Steam folder. Please check if Steam is installed.", null).ShowDialog(this);
+                        return;
+                    }
+                }
             }
 
-            string compatDaTaPath = Path.Combine(vm.GameFolder, "compatdata_radium");
+            string compatDataPath = Path.Combine(vm.GameFolder, "compatdata_radium");
 
             pInfo.FileName = Path.Combine(protonPath, "proton");
             pInfo.EnvironmentVariables["STEAM_COMPAT_CLIENT_INSTALL_PATH"] = finalSteamPath;
-            if (!Directory.Exists(compatDaTaPath)) Directory.CreateDirectory(compatDaTaPath);
-            pInfo.EnvironmentVariables["STEAM_COMPAT_DATA_PATH"] = compatDaTaPath;
+            if (!Directory.Exists(compatDataPath)) Directory.CreateDirectory(compatDataPath);
+            pInfo.EnvironmentVariables["STEAM_COMPAT_DATA_PATH"] = compatDataPath;
             pInfo.EnvironmentVariables["WINEDLLOVERRIDES"] = "winhttp=n,b";
             pInfo.Arguments = $"run \"{gameExePath}\" {mode}";
+        }
+        else if (vm.OperatingSystemName == "macOS")
+        {
+            // please someone on macos fix this if it is incorrect
+            string winePathFile = Path.Combine(_configFolder, "winepath.txt");
+            string winePath = File.Exists(winePathFile) ? (await File.ReadAllTextAsync(winePathFile)).Trim() : "";
+
+            if (string.IsNullOrEmpty(winePath))
+            {
+                _ = new MessageBoxWindow("Missing Configuration", "Please set the Wine executable path in the configuration window to continue.", null).ShowDialog(this);
+                return;
+            }
+            
+            string finalSteamPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Steam");
+            if (!Directory.Exists(finalSteamPath))
+            {
+                _ = new MessageBoxWindow("Steam Missing", "Could not find the Steam folder. Please check if Steam is installed.", null).ShowDialog(this);
+                return;
+            }
+
+            string compatDataPath = Path.Combine(vm.GameFolder, "compatdata_radium");
+
+            pInfo.FileName = winePath;
+            pInfo.EnvironmentVariables["STEAM_COMPAT_CLIENT_INSTALL_PATH"] = finalSteamPath;
+            if (!Directory.Exists(compatDataPath)) Directory.CreateDirectory(compatDataPath);
+            pInfo.EnvironmentVariables["WINEPREFIX"] = compatDataPath;
+            pInfo.EnvironmentVariables["WINEDLLOVERRIDES"] = "winhttp=n,b";
+            pInfo.Arguments = $"\"{gameExePath}\" {mode}";
         }
         else
         {
@@ -736,6 +793,7 @@ public partial class MainWindow : Window
             var p = Process.Start(pInfo);
             if (p != null)
             {
+                var discordRpcService = new DiscordRpcService(vm);
                 vm.GameProcess = p;
                 vm.CurrentState = LauncherState.Running;
                 p.EnableRaisingEvents = true;
@@ -743,12 +801,13 @@ public partial class MainWindow : Window
                 {
                     vm.CurrentState = LauncherState.Ready;
                     vm.GameProcess = null;
+                    discordRpcService.Dispose();
                 });
             }
         }
         catch (Exception ex)
         {
-            _ = new MessageBoxWindow("Launch Failed", ex.Message, null);
+            _ = new MessageBoxWindow("Launch Failed", ex.Message, null).ShowDialog(this);
         }
     }
 
@@ -775,7 +834,7 @@ public partial class MainWindow : Window
         return File.Exists(localPath) ? localPath : null;
     }
 
-    private async Task StartProcess(string path, MainWindowViewModel vm, bool isBatch = false)
+    private Task StartProcess(string path, MainWindowViewModel vm, bool isBatch = false)
     {
         try
         {
@@ -803,25 +862,21 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            _ = new MessageBoxWindow("Launch Failed", ex.Message, null);
+            _ = new MessageBoxWindow("Launch Failed", ex.Message, null).ShowDialog(this);
         }
+
+        return Task.CompletedTask;
     }
 
     private string? GetGameExecutablePath(MainWindowViewModel vm, string[] info)
     {
         string expectedExeName = info[3].Trim();
-        string candidate = Path.Combine(vm.GameFolder, info[2].Trim(), expectedExeName);
+        string candidate = Path.Combine(vm.GameFolder, expectedExeName);
         if (File.Exists(candidate))
         {
             return candidate;
         }
-
-        candidate = Path.Combine(vm.GameFolder, expectedExeName);
-        if (File.Exists(candidate))
-        {
-            return candidate;
-        }
-
+        
         try
         {
             var found = Directory.EnumerateFiles(vm.GameFolder, expectedExeName, SearchOption.AllDirectories).FirstOrDefault();
@@ -843,11 +898,12 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (vm.GameProcess == null) return;
+            var gameProcess = vm.GameProcess;
+            if (gameProcess == null) return;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                vm.GameProcess.Kill(true);
+                gameProcess.Kill(true);
             }
             else
             {
@@ -862,15 +918,15 @@ public partial class MainWindow : Window
 
                 await Task.Delay(2000);
 
-                if (!vm.GameProcess.HasExited)
+                if (!gameProcess.HasExited)
                 {
-                    vm.GameProcess.Kill(true);
+                    gameProcess.Kill(true);
                 }
             }
         }
         catch (Exception ex)
         {
-            _ = new MessageBoxWindow("Stop Failed", ex.Message, null);
+            _ = new MessageBoxWindow("Stop Failed", ex.Message, null).ShowDialog(this);
         }
     }
 
@@ -899,7 +955,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error loading OS logo from {osAssetPath}: {ex.Message}");
+            Debug.WriteLine($"Error loading OS logo from {osAssetPath}: {ex}");
         }
     }
 
@@ -1063,7 +1119,47 @@ public partial class MainWindow : Window
 
             if (vm.CurrentState == LauncherState.Ready)
             {
-                await LaunchRadium(vm);
+                bool apiAvailable;
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                {
+                    try
+                    {
+                        var checkApiRes = await _httpClient.GetAsync("https://api.radie.app/", cts.Token);
+                        apiAvailable = checkApiRes.IsSuccessStatusCode;
+                    }
+                    catch (TaskCanceledException ex) when (ex.CancellationToken == cts.Token)
+                    {
+                        Debug.WriteLine("API check timed out.");
+                        apiAvailable = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error checking API status: {ex}");
+                        apiAvailable = false;
+                    }
+                }
+
+                if (apiAvailable)
+                {
+                    await LaunchRadium(vm);
+                }
+                else
+                {
+                    var confirm = new ConfirmationWindow(
+                        "Confirm Launch",
+                        $"Radium's API server is down. Would you like to continue anyway?",
+                        "Yes",
+                        "No")
+                    {
+                        Height = 175
+                    };
+
+                    var result = await confirm.ShowDialog<bool?>(this);
+                    if (result == true)
+                    {
+                        await LaunchRadium(vm);
+                    }
+                }
             }
             else if (vm.CurrentState is LauncherState.NeedsDownload or LauncherState.NeedsUpdate)
             {

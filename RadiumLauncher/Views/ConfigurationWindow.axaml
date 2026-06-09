@@ -109,10 +109,38 @@
                 <StackPanel Spacing="15" Margin="20, 20, 20, 20">
                     <TextBlock Text="Settings" Foreground="White" FontSize="18" FontWeight="SemiBold" />
 
+                    <CheckBox x:Name="DiscordRPCOption" Content="Discord RPC" IsChecked="False"
+                              IsCheckedChanged="DiscordRPCOption_Checked"/>
+                    
+                    <StackPanel x:Name="UsernameOption" Spacing="5">
+                        <TextBlock Text="Radium Username" Foreground="#888888" FontSize="12" />
+                        <TextBox x:Name="Usernameopttb" Background="#1A1A1A" Foreground="White" BorderBrush="#2D2D2D"
+                                 CornerRadius="4" TextChanged="Username_Changed"/>
+                    </StackPanel>
+                    
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Downloader Thread Count" Foreground="#888888" FontSize="12" />
+                        <NumericUpDown x:Name="Threadcountnud" Background="#1A1A1A" BorderBrush="#2D2D2D"
+                                       CornerRadius="4" ValueChanged="ThreadCount_Changed" Minimum="1" 
+                                       Increment="1" FormatString="F0"/>
+                    </StackPanel>
+
                     <StackPanel x:Name="ProtonOption" Spacing="5" IsVisible="False">
                         <TextBlock Text="Proton Folder (Linux)" Foreground="#888888" FontSize="12" />
                         <TextBox x:Name="Protonpathtb" Background="#1A1A1A" Foreground="White" BorderBrush="#2D2D2D"
                                  CornerRadius="4" TextChanged="ProtonPath_Changed" />
+                    </StackPanel>
+                    
+                    <StackPanel x:Name="WineOption" Spacing="5" IsVisible="False">
+                        <TextBlock Text="Wine Path (macOS)" Foreground="#888888" FontSize="12" />
+                        <TextBox x:Name="Winepathtb" Background="#1A1A1A" Foreground="White" BorderBrush="#2D2D2D"
+                                 CornerRadius="4" TextChanged="WinePath_Changed" />
+                    </StackPanel>
+                    
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Steam App Id" Foreground="#888888" FontSize="12" />
+                        <TextBox x:Name="Steamappidtb" Background="#1A1A1A" Foreground="White" BorderBrush="#2D2D2D"
+                                 CornerRadius="4" TextChanged="SteamAppId_Changed" />
                     </StackPanel>
                     <StackPanel Spacing="5">
                         <TextBlock Text="Launch Options" Foreground="#888888" FontSize="12" />
